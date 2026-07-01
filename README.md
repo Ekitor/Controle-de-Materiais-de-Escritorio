@@ -13,5 +13,5 @@ O sistema tem como objetivo principal solucionar problemas recorrentes de quedas
 * **Eitor Torres** - Desenvolvedor & Scrum Master
 * **José Guilherme** - Desenvolvedor
 
-# 🚀 Status da Sprint 01
+# Status da Sprint 01
 Atualmente, a equipe está focada na execução da Sprint 01, desenvolvendo as operações fundamentais de CRUD (Create, Read, Update, Delete) para as principais entidades do sistema, com controle de versão, revisão de código (Pull Requests) e gestão do Backlog através do Kanban.
