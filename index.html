@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Almoxarifado IFPE - OpusHub</title>
+    <style>
+        /* Cores Baseadas no Protótipo */
+        :root {
+            --verde-escuro: #006633;
+            --verde-claro: #008844;
+            --verde-card: #78c27d;
+            --verde-botao: #009944;
+            --fundo-cinza: #f4f4f4;
+            --texto-escuro: #333;
+            --vermelho-alerta: #e74c3c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body { display: flex; height: 100vh; background-color: var(--fundo-cinza); }
+
+        /* Menu Lateral */
+        aside { width: 250px; background-color: var(--verde-escuro); color: white; padding: 20px 0; display: flex; flex-direction: column; }
+        .logo { display: flex; align-items: center; padding: 0 20px 30px; font-size: 1.2rem; font-weight: bold; }
+        .logo-icon { margin-right: 10px; font-size: 1.5rem; }
+        nav ul { list-style: none; }
+        nav ul li { padding: 15px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.3s; }
+        nav ul li:hover, nav ul li.ativo { background-color: rgba(255, 255, 255, 0.1); border-left: 4px solid white; }
+
+        /* Área Principal */
+        main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        header { background-color: var(--verde-claro); height: 60px; display: flex; justify-content: flex-end; align-items: center; padding: 0 30px; }
+        .usuario-badge { background-color: rgba(255, 255, 255, 0.2); color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold; }
+
+        /* Telas (Views) */
+        .view { padding: 30px; display: none; }
+        .view.ativa { display: block; }
+        .titulo-verde { color: var(--verde-claro); margin-bottom: 20px; }
+        .caixa-branca { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+        /* Estilos da Vitrine */
+        .barra-pesquisa { width: 100%; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; font-size: 1rem; }
+        .grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        .card-produto { background-color: var(--verde-card); border-radius: 12px; padding: 20px; text-align: center; color: var(--texto-escuro); display: flex; flex-direction: column; justify-content: space-between;}
+        .card-produto h3 { margin-bottom: 10px; color: var(--verde-escuro); font-size: 1.1rem; }
+        .icone-produto { font-size: 4rem; margin-bottom: 10px; }
+        .info-produto { font-size: 0.9rem; margin-bottom: 10px; background: rgba(255,255,255,0.4); padding: 5px; border-radius: 5px;}
+        .selecao-marca { margin-bottom: 15px; text-align: left; }
+        .selecao-marca select, .selecao-marca input { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 0.85rem; margin-top: 5px; }
+        .estoque-alerta { font-size: 0.8rem; font-weight: bold; color: var(--vermelho-alerta); margin-bottom: 10px; }
+        .btn-adicionar { background-color: var(--verde-botao); color: white; border: none; padding: 10px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; width: 100%; margin-top: auto;}
+        .btn-adicionar:hover { background-color: var(--verde-escuro); }
+        .btn-adicionar:disabled { background-color: #888; cursor: not-allowed; }
+
+        /* Estilos Gerais de Listas e Botões */
+        .lista-itens { list-style: none; }
+        .item-lista { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
+        .item-detalhes { display: flex; flex-direction: column; gap: 5px; }
+        .btn-excluir { color: var(--vermelho-alerta); background: none; border: none; cursor: pointer; font-weight: bold; }
+        .btn-confirmar { background-color: var(--verde-botao); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        
+        .form-grupo { display: flex; flex-direction: column; margin-bottom: 15px; }
+        .form-grupo label { margin-bottom: 5px; font-weight: bold; color: #555; }
+        .form-grupo input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+    <aside>
+        <div class="logo"><span class="logo-icon">🟩</span> Almoxarifado IFPE</div>
+        <nav>
+            <ul>
+                <li class="ativo" onclick="mudarTela('vitrine')">🏠 Inicio/Vitrine</li>
+                <li onclick="mudarTela('carrinho')">🛒 Meu Carrinho</li>
+                <li onclick="mudarTela('cadastro-material')">➕ Cadastrar Material</li>
+                <li onclick="mudarTela('funcionarios')">👥 Funcionários</li>
+                <li>🚪 Sair do Sistema</li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main>
+        <header>
+            <div class="usuario-badge">👤 Prof. José Guilherme</div>
+        </header>
+
+        <div id="view-vitrine" class="view ativa">
+            <input type="text" class="barra-pesquisa" placeholder="Buscar material...">
+            <div class="grid-produtos" id="gridProdutos"></div>
+        </div>
+
+        <div id="view-carrinho" class="view">
+            <h2 class="titulo-verde">Revisar e Enviar Requisição</h2>
+            <div class="caixa-branca">
+                <h4>Itens Selecionados</h4>
+                <ul class="lista-itens" id="listaCarrinho"></ul>
+            </div>
+            <div class="caixa-branca">
+                <p>Total de itens: <b id="totalUnidades">0</b> un</p>
+                <p>Valor Estimado: <b id="valorTotal">R$ 0,00</b></p>
+                <button class="btn-confirmar" onclick="finalizarPedido()">Confirmar Pedido</button>
+            </div>
+        </div>
+
+        <div id="view-cadastro-material" class="view">
+            <h2 class="titulo-verde">Cadastrar Novo Material no Estoque</h2>
+            <div class="caixa-branca">
+                <div class="form-grupo">
+                    <label>Nome do Material</label>
+                    <input type="text" id="cadNomeMat" placeholder="Ex: Borracha Branca">
+                </div>
+                <div class="form-grupo">
+                    <label>Ícone Visual (Emoji - Imagem)</label>
+                    <input type="text" id="cadIconeMat" placeholder="">
+                </div>
+                <div class="form-grupo">
+                    <label>Quantidade Disponível</label>
+                    <input type="number" id="cadQtdMat" placeholder="Ex: 20" min="0">
+                </div>
+                <div class="form-grupo">
+                    <label>Preço Unitário (R$)</label>
+                    <input type="number" step="0.01" id="cadPrecoMat" placeholder="Ex: 1.50" min="0">
+                </div>
+                <button class="btn-confirmar" onclick="salvarNovoMaterial()">Salvar Material</button>
+            </div>
+        </div>
+
+        <div id="view-funcionarios" class="view">
+            <h2 class="titulo-verde">Gestão de Funcionários</h2>
+            
+            <div class="caixa-branca">
+                <h4 style="margin-bottom: 15px;">Cadastrar Novo Funcionário</h4>
+                <div class="form-grupo">
+                    <label>Nome Completo</label>
+                    <input type="text" id="cadNomeFunc" placeholder="Ex: João da Silva">
+                </div>
+                <div class="form-grupo">
+                    <label>Cargo</label>
+                    <input type="text" id="cadCargoFunc" placeholder="Ex: Assistente Administrativo">
+                </div>
+                <div class="form-grupo">
+                    <label>Departamento</label>
+                    <input type="text" id="cadDeptoFunc" placeholder="Ex: Administração">
+                </div>
+                <button class="btn-confirmar" onclick="salvarNovoFuncionario()">Cadastrar Funcionário</button>
+            </div>
+
+            <div class="caixa-branca">
+                <h4 style="margin-bottom: 15px;">Funcionários Cadastrados</h4>
+                <ul class="lista-itens" id="listaFuncionarios">
+                    </ul>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- BANCO DE DADOS SIMULADO: MATERIAIS ---
+        let produtosDisponiveis = [
+            { id: 1, nome: 'Caneta', icone: '🖊️', quantidade: 0, preco: 1.50, marcas: ['Bic', 'Compactor', 'Faber-Castell'] },
+            { id: 2, nome: 'Tinta para Impressora', icone: '🖨️', quantidade: 8, preco: 45.90, marcas: ['HP', 'Epson', 'Brother'] },
+            { id: 3, nome: 'Clipes de Papel', icone: '📎', quantidade: 15, preco: 3.20, marcas: ['Acrimet', 'Spiral'] },
+            { id: 4, nome: 'Papel A4', icone: '📄', quantidade: 50, preco: 25.00, marcas: ['Chamex', 'Report'] }
+        ];
+
+        // --- BANCO DE DADOS SIMULADO: FUNCIONÁRIOS ---
+        let funcionariosDB = [
+            { id: 1, nome: 'Sara dos Santos Lima', cargo: 'Coordenadora da CMPSG', departamento: 'Coordenação de Patrimônio' },
+            { id: 2, nome: 'Eduardo Soares', cargo: 'Supervisor Administrativo', departamento: 'Administração' }
+        ];
+
+        let carrinho = []; 
+        let proximoIdMaterial = 5;
+        let proximoIdFunc = 3;
+
+        // --- FUNÇÕES DA VITRINE E CARRINHO (Mantidas) ---
+        function renderizarVitrine() {
+            const grid = document.getElementById('gridProdutos');
+            grid.innerHTML = '';
+            produtosDisponiveis.forEach(produto => {
+                const isIndisponivel = produto.quantidade === 0;
+                let optionsMarcas = `<option value="">Sem preferência</option>`;
+                if (produto.marcas) produto.marcas.forEach(m => optionsMarcas += `<option value="${m}">${m}</option>`);
+                optionsMarcas += `<option value="outra">Outra marca (Sugerir)...</option>`;
+
+                grid.innerHTML += `
+                    <div class="card-produto">
+                        <h3>${produto.nome}</h3>
+                        <div class="icone-produto" title="Imagem do produto">${produto.icone || '📦'}</div>
+                        <div class="info-produto">
+                            <p><strong>Preço:</strong> R$ ${produto.preco.toFixed(2)}</p>
+                            <p><strong>Estoque:</strong> ${produto.quantidade} un</p>
+                        </div>
+                        ${isIndisponivel ? '<div class="estoque-alerta">❌ Indisponível</div>' : ''}
+                        <div class="selecao-marca">
+                            <label style="font-size: 0.85rem; font-weight: bold;">Marca recomendada:</label>
+                            <select id="marca-select-${produto.id}" onchange="verificarSugestaoMarca(${produto.id})" ${isIndisponivel ? 'disabled' : ''}>${optionsMarcas}</select>
+                            <input type="text" id="marca-input-${produto.id}" placeholder="Digite sua sugestão" style="display:none;">
+                        </div>
+                        <button class="btn-adicionar" onclick="adicionarAoPedido(${produto.id})" ${isIndisponivel ? 'disabled' : ''}>+ Adicionar ao Pedido</button>
+                    </div>
+                `;
+            });
+        }
+
+        function verificarSugestaoMarca(idProduto) {
+            const select = document.getElementById(`marca-select-${idProduto}`);
+            const input = document.getElementById(`marca-input-${idProduto}`);
+            input.style.display = select.value === 'outra' ? 'block' : 'none';
+            if(select.value === 'outra') input.focus();
+        }
+
+        function adicionarAoPedido(id) {
+            const produto = produtosDisponiveis.find(p => p.id === id);
+            const selectElement = document.getElementById(`marca-select-${id}`);
+            const inputElement = document.getElementById(`marca-input-${id}`);
+            let marcaEscolhida = selectElement.value === 'outra' ? (inputElement.value || 'Sugestão não informada') : (selectElement.value || 'Qualquer marca');
+
+            const itemExistente = carrinho.find(i => i.id === id && i.marca === marcaEscolhida);
+            if (itemExistente) itemExistente.quantidade++;
+            else carrinho.push({ id: produto.id, nome: produto.nome, preco: produto.preco, marca: marcaEscolhida, quantidade: 1 });
+            
+            alert(`${produto.nome} adicionado ao pedido!`);
+            atualizarCarrinho();
+        }
+
+        function atualizarCarrinho() {
+            const lista = document.getElementById('listaCarrinho');
+            lista.innerHTML = carrinho.length === 0 ? '<li style="padding:15px; color:#666;">Seu carrinho está vazio.</li>' : '';
+            let totalUnidades = 0, valorTotal = 0;
+
+            carrinho.forEach((item, index) => {
+                totalUnidades += item.quantidade;
+                valorTotal += (item.preco * item.quantidade);
+                lista.innerHTML += `
+                    <li class="item-lista">
+                        <div class="item-detalhes">
+                            <strong>${item.nome}</strong>
+                            <span style="font-size: 0.85rem; color: #666; font-style: italic;">Marca: ${item.marca}</span>
+                            <span style="font-size: 0.9rem; color: var(--verde-escuro);">${item.quantidade}x R$ ${item.preco.toFixed(2)} = R$ ${(item.quantidade * item.preco).toFixed(2)}</span>
+                        </div>
+                        <button class="btn-excluir" onclick="removerDoCarrinho(${index})">Remover</button>
+                    </li>
+                `;
+            });
+            document.getElementById('totalUnidades').textContent = totalUnidades;
+            document.getElementById('valorTotal').textContent = `R$ ${valorTotal.toFixed(2)}`;
+        }
+
+        function removerDoCarrinho(indexArray) {
+            carrinho.splice(indexArray, 1);
+            atualizarCarrinho();
+        }
+
+        function finalizarPedido() {
+            if(carrinho.length === 0) return alert('Carrinho vazio!');
+            alert('Pedido enviado à chefia!');
+            carrinho = [];
+            atualizarCarrinho();
+            mudarTela('vitrine');
+        }
+
+        function salvarNovoMaterial() {
+            const nome = document.getElementById('cadNomeMat').value;
+            const icone = document.getElementById('cadIconeMat').value;
+            const qtd = parseInt(document.getElementById('cadQtdMat').value);
+            const preco = parseFloat(document.getElementById('cadPrecoMat').value);
+
+            if (!nome || isNaN(qtd) || isNaN(preco)) return alert("Preencha todos os campos numéricos corretamente!");
+
+            produtosDisponiveis.push({ id: proximoIdMaterial++, nome, icone: icone || '📦', quantidade: qtd, preco, marcas: [] });
+            alert(`Material '${nome}' cadastrado com sucesso!`);
+            
+            document.getElementById('cadNomeMat').value = ''; document.getElementById('cadIconeMat').value = '';
+            document.getElementById('cadQtdMat').value = ''; document.getElementById('cadPrecoMat').value = '';
+            renderizarVitrine(); mudarTela('vitrine');
+        }
+
+        // --- FUNÇÕES DO NOVO CRUD DE FUNCIONÁRIOS ---
+        function renderizarFuncionarios() {
+            const lista = document.getElementById('listaFuncionarios');
+            lista.innerHTML = '';
+            
+            if (funcionariosDB.length === 0) {
+                lista.innerHTML = '<li style="padding:15px; color:#666;">Nenhum funcionário cadastrado.</li>';
+                return;
+            }
+
+            funcionariosDB.forEach((func, index) => {
+                lista.innerHTML += `
+                    <li class="item-lista">
+                        <div class="item-detalhes">
+                            <strong style="font-size: 1.1rem; color: var(--verde-escuro);">👤 ${func.nome}</strong>
+                            <span style="font-size: 0.9rem; color: #555;"><strong>Cargo:</strong> ${func.cargo}</span>
+                            <span style="font-size: 0.9rem; color: #555;"><strong>Departamento:</strong> ${func.departamento}</span>
+                        </div>
+                        <button class="btn-excluir" onclick="removerFuncionario(${index})">Excluir</button>
+                    </li>
+                `;
+            });
+        }
+
+        function salvarNovoFuncionario() {
+            const nome = document.getElementById('cadNomeFunc').value;
+            const cargo = document.getElementById('cadCargoFunc').value;
+            const depto = document.getElementById('cadDeptoFunc').value;
+
+            if (!nome || !cargo || !depto) {
+                alert("Por favor, preencha todos os campos do funcionário!");
+                return;
+            }
+
+            funcionariosDB.push({
+                id: proximoIdFunc++,
+                nome: nome,
+                cargo: cargo,
+                departamento: depto
+            });
+
+            alert(`Funcionário(a) ${nome} cadastrado(a) com sucesso!`);
+            
+            // Limpa o formulário
+            document.getElementById('cadNomeFunc').value = '';
+            document.getElementById('cadCargoFunc').value = '';
+            document.getElementById('cadDeptoFunc').value = '';
+
+            // Atualiza a lista na tela
+            renderizarFuncionarios();
+        }
+
+        function removerFuncionario(indexArray) {
+            const confirmacao = confirm(`Tem certeza que deseja excluir o funcionário ${funcionariosDB[indexArray].nome}?`);
+            if (confirmacao) {
+                funcionariosDB.splice(indexArray, 1);
+                renderizarFuncionarios();
+            }
+        }
+function mudarTela(idTela) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('ativa'));
+            document.querySelectorAll('nav ul li').forEach(l => l.classList.remove('ativo'));
+            
+            // Mapeia os IDs das views com os índices dos itens do menu (li)
+            const menuMap = { 'vitrine': 0, 'carrinho': 1, 'cadastro-material': 2, 'funcionarios': 3 };
+            
+            document.getElementById(`view-${idTela}`).classList.add('ativa');
+            document.querySelectorAll('nav ul li')[menuMap[idTela]].classList.add('ativo');
+
+            // Atualiza dados dependendo da tela
+            if(idTela === 'vitrine') renderizarVitrine();
+            else if(idTela === 'carrinho') atualizarCarrinho();
+            else if(idTela === 'funcionarios') renderizarFuncionarios();
+        }
+
+        // Inicialização
+        window.onload = () => {
+            renderizarVitrine();
+            renderizarFuncionarios();
+        };
+    </script>
+</body>
+</html>
