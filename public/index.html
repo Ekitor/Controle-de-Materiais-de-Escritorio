@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Almoxarifado IFPE - OpusHub</title>
+    <style>
+        :root {
+            --verde-escuro: #006633;
+            --verde-header: #00552b;
+            --verde-card: #d4edd6;
+            --verde-borda-card: #78c27d;
+            --verde-botao: #006633;
+            --verde-botao-hover: #004d26;
+            --fundo-cinza: #f4f4f4;
+            --texto-escuro: #333;
+            --texto-suave: #595959;
+            --vermelho-alerta: #8a1c14;
+            --vermelho-botao: #b3261e;
+            --foco: #1a4fd6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body { display: flex; min-height: 100vh; background-color: var(--fundo-cinza); color: var(--texto-escuro); }
+
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+        :focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+        aside :focus-visible, header :focus-visible { outline-color: #fff; }
+
+        .skip-link { position: absolute; left: 10px; top: -60px; background: #fff; color: var(--verde-escuro); padding: 10px 15px; border-radius: 5px; font-weight: bold; z-index: 100; }
+        .skip-link:focus { top: 10px; }
+
+        aside { width: 250px; flex-shrink: 0; background-color: var(--verde-escuro); color: white; padding: 20px 0; display: flex; flex-direction: column; }
+        .logo { display: flex; align-items: center; padding: 0 20px 30px; font-size: 1.2rem; font-weight: bold; }
+        .logo-icon { margin-right: 10px; font-size: 1.5rem; }
+        nav ul { list-style: none; }
+        .nav-btn { width: 100%; text-align: left; background: none; color: white; border: none; border-left: 4px solid transparent; padding: 15px 20px; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.3s; }
+        .nav-btn:hover, .nav-btn[aria-current="page"] { background-color: rgba(255, 255, 255, 0.15); border-left-color: white; }
+        .nav-btn[aria-current="page"] { font-weight: bold; }
+
+        .coluna { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        header { background-color: var(--verde-header); height: 60px; display: flex; justify-content: flex-end; align-items: center; padding: 0 30px; }
+        .usuario-badge { background-color: rgba(255, 255, 255, 0.15); color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold; }
+        main { flex: 1; overflow-y: auto; }
+        main:focus { outline: none; }
+
+        .status { margin: 20px 30px 0; padding: 12px 15px; border-radius: 8px; background: #e3f4e5; border: 1px solid var(--verde-escuro); color: #0b3d1f; font-weight: bold; }
+        .status:empty { display: none; }
+        .status.erro { background: #fdecea; border-color: var(--vermelho-alerta); color: var(--vermelho-alerta); }
+
+        .view { padding: 30px; display: none; }
+        .view.ativa { display: block; }
+        .view h2:focus { outline: none; }
+        .titulo-verde { color: var(--verde-escuro); margin-bottom: 20px; }
+        .caixa-branca { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .caixa-branca h3 { margin-bottom: 15px; }
+
+        .barra-pesquisa { width: 100%; padding: 15px; border-radius: 8px; border: 1px solid #767676; margin-bottom: 10px; font-size: 1rem; }
+        .rotulo-busca { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        .resultado-busca { margin-bottom: 15px; color: var(--texto-suave); }
+        ::placeholder { color: var(--texto-suave); opacity: 1; }
+        .grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; list-style: none; }
+        .card-produto { background-color: var(--verde-card); border: 2px solid var(--verde-borda-card); border-radius: 12px; padding: 20px; text-align: center; color: var(--texto-escuro); display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
+        .card-produto h3 { margin-bottom: 10px; color: #004d26; font-size: 1.1rem; }
+        .icone-produto { font-size: 4rem; margin-bottom: 10px; }
+        .info-produto { font-size: 0.9rem; margin-bottom: 10px; background: rgba(255,255,255,0.6); padding: 5px; border-radius: 5px; }
+        .selecao-marca { margin-bottom: 15px; text-align: left; }
+        .selecao-marca label { font-size: 0.85rem; font-weight: bold; display: block; }
+        .selecao-marca select, .selecao-marca input { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #767676; font-size: 0.85rem; margin-top: 5px; }
+        .selecao-qtd { margin-bottom: 15px; text-align: left; }
+        .selecao-qtd > label { font-size: 0.85rem; font-weight: bold; display: block; }
+        .qtd-controle { display: flex; align-items: stretch; gap: 6px; margin-top: 5px; }
+        .qtd-controle button { width: 40px; border: 1px solid #767676; background: white; border-radius: 5px; font-size: 1.2rem; font-weight: bold; cursor: pointer; color: var(--verde-escuro); }
+        .qtd-controle button:disabled { background: #e6e6e6; color: #595959; cursor: not-allowed; }
+        .qtd-controle input { flex: 1; min-width: 0; text-align: center; padding: 8px; border-radius: 5px; border: 1px solid #767676; font-size: 1rem; }
+        .qtd-dica { font-size: 0.8rem; color: var(--texto-suave); margin-top: 4px; }
+        .estoque-alerta { font-size: 0.85rem; font-weight: bold; color: var(--vermelho-alerta); margin-bottom: 10px; }
+
+        .btn-adicionar { background-color: var(--verde-botao); color: white; border: none; padding: 10px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; width: 100%; margin-top: auto; font-size: 0.95rem; }
+        .btn-adicionar:hover { background-color: var(--verde-botao-hover); }
+        .btn-adicionar:disabled { background-color: #595959; cursor: not-allowed; }
+        .btn-excluir { color: var(--vermelho-botao); background: none; border: 1px solid var(--vermelho-botao); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+        .btn-editar { color: var(--verde-escuro); background: none; border: 1px solid var(--verde-escuro); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+        .btn-confirmar { background-color: var(--verde-botao); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-confirmar:hover { background-color: var(--verde-botao-hover); }
+        .btn-secundario { background: white; color: var(--verde-escuro); border: 2px solid var(--verde-escuro); padding: 12px; border-radius: 8px; width: 100%; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+        .lista-itens { list-style: none; }
+        .item-lista { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 15px 0; border-bottom: 1px solid #eee; }
+        .item-detalhes { display: flex; flex-direction: column; gap: 5px; }
+        .item-detalhes .nome { font-size: 1.1rem; color: var(--verde-escuro); }
+        .item-detalhes .meta { font-size: 0.9rem; color: #555; }
+        .acoes { display: flex; gap: 8px; flex-shrink: 0; }
+        .vazio { padding: 15px; color: var(--texto-suave); }
+
+        .form-grupo { display: flex; flex-direction: column; margin-bottom: 15px; }
+        .form-grupo label { margin-bottom: 5px; font-weight: bold; color: #555; }
+        .form-grupo input { padding: 10px; border: 1px solid #767676; border-radius: 5px; font-size: 1rem; }
+        .form-grupo input[aria-invalid="true"] { border: 2px solid var(--vermelho-alerta); }
+        .dica { font-weight: normal; color: var(--texto-suave); font-size: 0.9rem; }
+        .erro-form { color: var(--vermelho-alerta); font-weight: bold; margin-bottom: 10px; }
+        .erro-form:empty { display: none; }
+
+        @media (max-width: 700px) {
+            body { flex-direction: column; }
+            aside { width: 100%; padding: 10px 0; }
+            .logo { padding-bottom: 10px; }
+            nav ul { display: flex; flex-wrap: wrap; }
+            .nav-btn { padding: 10px 15px; }
+            .view { padding: 20px 15px; }
+            .item-lista { flex-direction: column; align-items: flex-start; }
+            .status { margin: 15px 15px 0; }
+        }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo principal</a>
+
+    <aside>
+        <h1 class="logo"><span class="logo-icon" aria-hidden="true">🟩</span> Almoxarifado IFPE</h1>
+        <nav aria-label="Menu principal">
+            <ul>
+                <li><button type="button" class="nav-btn" data-tela="vitrine" aria-current="page"><span aria-hidden="true">🏠</span> Início/Vitrine</button></li>
+                <li><button type="button" class="nav-btn" data-tela="carrinho"><span aria-hidden="true">🛒</span> Meu Carrinho</button></li>
+                <li><button type="button" class="nav-btn" data-tela="cadastro-material"><span aria-hidden="true">➕</span> Cadastrar Material</button></li>
+                <li><button type="button" class="nav-btn" data-tela="funcionarios"><span aria-hidden="true">👥</span> Funcionários</button></li>
+                <li><button type="button" class="nav-btn" id="btnSair"><span aria-hidden="true">🚪</span> Sair do Sistema</button></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <div class="coluna">
+        <header>
+            <div class="usuario-badge"><span aria-hidden="true">👤</span> <span class="sr-only">Usuário:</span> Prof. José Guilherme</div>
+        </header>
+
+        <main id="conteudo" tabindex="-1">
+            <div id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></div>
+
+            <section id="view-vitrine" class="view ativa" aria-labelledby="titulo-vitrine">
+                <h2 id="titulo-vitrine" class="titulo-verde" tabindex="-1">Vitrine de Materiais</h2>
+                <label for="buscaMaterial" class="rotulo-busca">Buscar material</label>
+                <input type="search" id="buscaMaterial" class="barra-pesquisa" placeholder="Ex: Caneta" autocomplete="off">
+                <p id="resultadoBusca" class="resultado-busca" role="status"></p>
+                <ul class="grid-produtos" id="gridProdutos"></ul>
+            </section>
+
+            <section id="view-carrinho" class="view" aria-labelledby="titulo-carrinho">
+                <h2 id="titulo-carrinho" class="titulo-verde" tabindex="-1">Revisar e Enviar Requisição</h2>
+                <div class="caixa-branca">
+                    <h3>Itens Selecionados</h3>
+                    <ul class="lista-itens" id="listaCarrinho"></ul>
+                </div>
+                <div class="caixa-branca">
+                    <p>Total de itens: <strong id="totalUnidades">0</strong> un</p>
+                    <p>Valor Estimado: <strong id="valorTotal">R$ 0,00</strong></p>
+                    <button type="button" class="btn-confirmar" id="btnFinalizar">Confirmar Pedido</button>
+                </div>
+            </section>
+
+            <section id="view-cadastro-material" class="view" aria-labelledby="titulo-material">
+                <h2 id="titulo-material" class="titulo-verde" tabindex="-1">Materiais do Estoque</h2>
+
+                <div class="caixa-branca">
+                    <h3 id="subtituloMaterial">Cadastrar Novo Material</h3>
+                    <form id="formMaterial" novalidate aria-labelledby="subtituloMaterial">
+                        <p id="erroMaterial" class="erro-form" role="alert"></p>
+                        <input type="hidden" id="idMaterialEdicao">
+                        <div class="form-grupo">
+                            <label for="cadNomeMat">Nome do Material <span class="dica">(obrigatório)</span></label>
+                            <input type="text" id="cadNomeMat" required maxlength="100" placeholder="Ex: Borracha Branca" autocomplete="off">
+                        </div>
+                        <div class="form-grupo">
+                            <label for="cadIconeMat">Ícone Visual <span class="dica">(emoji, opcional)</span></label>
+                            <input type="text" id="cadIconeMat" maxlength="20" autocomplete="off">
+                        </div>
+                        <div class="form-grupo">
+                            <label for="cadQtdMat">Quantidade Disponível <span class="dica">(obrigatório)</span></label>
+                            <input type="number" id="cadQtdMat" required placeholder="Ex: 20" min="0" step="1" inputmode="numeric">
+                        </div>
+                        <div class="form-grupo">
+                            <label for="cadPrecoMat">Preço Unitário (R$) <span class="dica">(obrigatório)</span></label>
+                            <input type="number" step="0.01" id="cadPrecoMat" required placeholder="Ex: 1.50" min="0" inputmode="decimal">
+                        </div>
+                        <div class="form-grupo">
+                            <label for="cadMarcasMat">Marcas <span class="dica">(separadas por vírgula, opcional)</span></label>
+                            <input type="text" id="cadMarcasMat" maxlength="255" placeholder="Ex: Bic, Faber-Castell" autocomplete="off">
+                        </div>
+                        <button type="submit" class="btn-confirmar" id="btnSalvarMaterial">Salvar Material</button>
+                        <button type="button" class="btn-secundario" id="btnCancelarMaterial" hidden>Cancelar edição</button>
+                    </form>
+                </div>
+
+                <div class="caixa-branca">
+                    <h3>Materiais Cadastrados</h3>
+                    <ul class="lista-itens" id="listaMateriais"></ul>
+                </div>
+            </section>
+
+            <section id="view-funcionarios" class="view" aria-labelledby="titulo-funcionarios">
+                <h2 id="titulo-funcionarios" class="titulo-verde" tabindex="-1">Gestão de Funcionários</h2>
+
+                <div class="caixa-branca">
+                    <h3 id="subtituloFunc">Cadastrar Novo Funcionário</h3>
+                    <form id="formFuncionario" novalidate aria-labelledby="subtituloFunc">
+                        <p id="erroFunc" class="erro-form" role="alert"></p>
+                        <input type="hidden" id="idFuncEdicao">
+                        <div class="form-grupo">
+                            <label for="cadNomeFunc">Nome Completo <span class="dica">(obrigatório)</span></label>
+                            <input type="text" id="cadNomeFunc" required maxlength="100" placeholder="Ex: João da Silva" autocomplete="name">
+                        </div>
+                        <div class="form-grupo">
+                            <label for="cadCargoFunc">Cargo <span class="dica">(obrigatório)</span></label>
+                            <input type="text" id="cadCargoFunc" required maxlength="100" placeholder="Ex: Assistente Administrativo" autocomplete="organization-title">
+                        </div>
+                        <div class="form-grupo">
+                            <label for="cadDeptoFunc">Departamento <span class="dica">(obrigatório)</span></label>
+                            <input type="text" id="cadDeptoFunc" required maxlength="100" placeholder="Ex: Administração" autocomplete="off">
+                        </div>
+                        <button type="submit" class="btn-confirmar" id="btnSalvarFunc">Cadastrar Funcionário</button>
+                        <button type="button" class="btn-secundario" id="btnCancelarFunc" hidden>Cancelar edição</button>
+                    </form>
+                </div>
+
+                <div class="caixa-branca">
+                    <h3>Funcionários Cadastrados</h3>
+                    <ul class="lista-itens" id="listaFuncionarios"></ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const API = location.protocol === 'file:' ? 'http://localhost:3000' : '';
+
+        let produtosDisponiveis = [];
+        let funcionarios = [];
+        let carrinho = [];
+
+        const $ = (id) => document.getElementById(id);
+        const moeda = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        function esc(texto) {
+            return String(texto ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function anunciar(mensagem, erro = false) {
+            const el = $('status');
+            el.classList.toggle('erro', erro);
+            el.textContent = '';
+            setTimeout(() => { el.textContent = mensagem; }, 50);
+        }
+
+        async function api(metodo, caminho, corpo) {
+            let resposta;
+            try {
+                resposta = await fetch(API + caminho, {
+                    method: metodo,
+                    headers: corpo ? { 'Content-Type': 'application/json' } : undefined,
+                    body: corpo ? JSON.stringify(corpo) : undefined
+                });
+            } catch (e) {
+                throw new Error('Não foi possível conectar ao servidor. Verifique se ele está em execução (npm start).');
+            }
+            let dados = null;
+            try { dados = await resposta.json(); } catch (e) { /* resposta sem corpo */ }
+            if (!resposta.ok) throw new Error((dados && dados.erro) || 'Erro ao processar a solicitação.');
+            return dados;
+        }
+
+        function mudarTela(idTela, moverFoco = false) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('ativa'));
+            document.querySelectorAll('.nav-btn[data-tela]').forEach(b => {
+                if (b.dataset.tela === idTela) b.setAttribute('aria-current', 'page');
+                else b.removeAttribute('aria-current');
+            });
+            $(`view-${idTela}`).classList.add('ativa');
+
+            if (idTela === 'vitrine') carregarMateriais();
+            else if (idTela === 'carrinho') atualizarCarrinho();
+            else if (idTela === 'cadastro-material') carregarMateriais();
+            else if (idTela === 'funcionarios') carregarFuncionarios();
+
+            if (moverFoco) $(`view-${idTela}`).querySelector('h2').focus();
+        }
+
+        async function carregarMateriais() {
+            try {
+                produtosDisponiveis = await api('GET', '/api/materiais');
+            } catch (e) {
+                produtosDisponiveis = [];
+                anunciar(e.message, true);
+            }
+            renderizarVitrine();
+            renderizarListaMateriais();
+        }
+
+        function renderizarVitrine() {
+            const termo = $('buscaMaterial').value.trim().toLowerCase();
+            const lista = produtosDisponiveis.filter(p => p.nome.toLowerCase().includes(termo));
+            const grid = $('gridProdutos');
+            grid.innerHTML = '';
+
+            $('resultadoBusca').textContent = termo
+                ? `${lista.length} ${lista.length === 1 ? 'material encontrado' : 'materiais encontrados'}.`
+                : '';
+            if (lista.length === 0) {
+                grid.innerHTML = `<li class="vazio">${termo ? 'Nenhum material encontrado.' : 'Nenhum material cadastrado.'}</li>`;
+                return;
+            }
+
+            lista.forEach(produto => {
+                const indisponivel = produto.quantidade === 0;
+                let opcoes = '<option value="">Sem preferência</option>';
+                (produto.marcas || []).forEach(m => opcoes += `<option value="${esc(m)}">${esc(m)}</option>`);
+                opcoes += '<option value="outra">Outra marca (Sugerir)...</option>';
+
+                grid.innerHTML += `
+                    <li class="card-produto">
+                        <h3>${esc(produto.nome)}</h3>
+                        <div class="icone-produto" aria-hidden="true">${esc(produto.icone || '📦')}</div>
+                        <div class="info-produto">
+                            <p><strong>Preço:</strong> ${moeda(produto.preco)}</p>
+                            <p><strong>Estoque:</strong> <span id="estoque-${produto.id}">${produto.quantidade}</span> un</p>
+                        </div>
+                        ${indisponivel ? '<div class="estoque-alerta"><span aria-hidden="true">❌</span> Indisponível</div>' : ''}
+                        <div class="selecao-marca">
+                            <label for="marca-select-${produto.id}">Marca recomendada: <span class="sr-only">${esc(produto.nome)}</span></label>
+                            <select id="marca-select-${produto.id}" data-id="${produto.id}" ${indisponivel ? 'disabled' : ''}>${opcoes}</select>
+                            <label for="marca-input-${produto.id}" class="sr-only">Sugestão de marca para ${esc(produto.nome)}</label>
+                            <input type="text" id="marca-input-${produto.id}" placeholder="Digite sua sugestão" maxlength="60" hidden>
+                        </div>
+                        <div class="selecao-qtd">
+                            <label for="qtd-${produto.id}">Quantidade: <span class="sr-only">${esc(produto.nome)}</span></label>
+                            <div class="qtd-controle">
+                                <button type="button" data-qtd-menos="${produto.id}" aria-label="Diminuir quantidade de ${esc(produto.nome)}" ${indisponivel ? 'disabled' : ''}>−</button>
+                                <input type="number" id="qtd-${produto.id}" data-qtd="${produto.id}" value="1" min="1" max="${produto.quantidade}" step="1" inputmode="numeric" ${indisponivel ? 'disabled' : ''}>
+                                <button type="button" data-qtd-mais="${produto.id}" aria-label="Aumentar quantidade de ${esc(produto.nome)}" ${indisponivel ? 'disabled' : ''}>+</button>
+                            </div>
+                            <p class="qtd-dica" id="qtd-dica-${produto.id}"></p>
+                        </div>
+                        <button type="button" class="btn-adicionar" data-adicionar="${produto.id}" ${indisponivel ? 'disabled' : ''}>Adicionar ao Pedido<span class="sr-only">: ${esc(produto.nome)}</span></button>
+                    </li>`;
+                atualizarCardQuantidade(produto.id);
+            });
+        }
+
+        function qtdNoCarrinho(id) {
+            return carrinho.filter(i => i.id === id).reduce((soma, i) => soma + i.quantidade, 0);
+        }
+
+        function restantePedido(produto) {
+            return Math.max(0, produto.quantidade - qtdNoCarrinho(produto.id));
+        }
+
+        function atualizarCardQuantidade(id, forcarValor = true) {
+            const produto = produtosDisponiveis.find(p => p.id === id);
+            const input = $(`qtd-${id}`);
+            if (!produto || !input) return;
+
+            const restante = restantePedido(produto);
+            const noCarrinho = qtdNoCarrinho(id);
+            const esgotado = restante === 0;
+
+            input.max = restante;
+            input.min = esgotado ? 0 : 1;
+            input.disabled = esgotado;
+            const digitado = parseInt(input.value, 10);
+            if (esgotado) input.value = 0;
+            else if (!Number.isNaN(digitado)) input.value = Math.min(Math.max(digitado, 1), restante);
+            else if (forcarValor) input.value = 1;
+
+            const menos = document.querySelector(`[data-qtd-menos="${id}"]`);
+            const mais = document.querySelector(`[data-qtd-mais="${id}"]`);
+            const adicionar = document.querySelector(`[data-adicionar="${id}"]`);
+            if (menos) menos.disabled = esgotado || Number(input.value) <= 1;
+            if (mais) mais.disabled = esgotado || Number(input.value) >= restante;
+            if (adicionar) adicionar.disabled = esgotado;
+
+            $(`qtd-dica-${id}`).textContent = produto.quantidade === 0
+                ? ''
+                : esgotado
+                    ? `Todo o estoque (${noCarrinho} un) já está no seu pedido.`
+                    : noCarrinho > 0
+                        ? `${noCarrinho} un já no pedido; dá para pedir mais ${restante}.`
+                        : `Máximo: ${restante} un.`;
+        }
+
+        function ajustarQuantidade(id, delta) {
+            const input = $(`qtd-${id}`);
+            if (!input || input.disabled) return;
+            input.value = (parseInt(input.value, 10) || 1) + delta;
+            atualizarCardQuantidade(id);
+        }
+
+        function verificarSugestaoMarca(idProduto) {
+            const select = $(`marca-select-${idProduto}`);
+            const input = $(`marca-input-${idProduto}`);
+            input.hidden = select.value !== 'outra';
+            if (select.value === 'outra') input.focus();
+        }
+
+        function adicionarAoPedido(id) {
+            const produto = produtosDisponiveis.find(p => p.id === id);
+            if (!produto) return;
+            const select = $(`marca-select-${id}`);
+            const input = $(`marca-input-${id}`);
+            const marca = select.value === 'outra' ? (input.value.trim() || 'Sugestão não informada') : (select.value || 'Qualquer marca');
+
+            const campoQtd = $(`qtd-${id}`);
+            const quantidade = Number(campoQtd.value);
+            const restante = restantePedido(produto);
+
+            if (!Number.isInteger(quantidade) || quantidade < 1) {
+                campoQtd.focus();
+                return anunciar('Informe uma quantidade inteira maior ou igual a 1.', true);
+            }
+            if (quantidade > restante) {
+                campoQtd.focus();
+                return anunciar(`Só é possível pedir mais ${restante} un de ${produto.nome}.`, true);
+            }
+
+            const existente = carrinho.find(i => i.id === id && i.marca === marca);
+            if (existente) existente.quantidade += quantidade;
+            else carrinho.push({ id: produto.id, nome: produto.nome, preco: produto.preco, marca, quantidade });
+
+            campoQtd.value = 1;
+            atualizarCardQuantidade(id);
+            anunciar(`${quantidade} un de ${produto.nome} adicionada(s) ao pedido.`);
+            atualizarCarrinho();
+        }
+
+        function atualizarCarrinho() {
+            const lista = $('listaCarrinho');
+            lista.innerHTML = carrinho.length === 0 ? '<li class="vazio">Seu carrinho está vazio.</li>' : '';
+            let totalUnidades = 0, valorTotal = 0;
+
+            carrinho.forEach((item, index) => {
+                totalUnidades += item.quantidade;
+                valorTotal += item.preco * item.quantidade;
+                lista.innerHTML += `
+                    <li class="item-lista">
+                        <div class="item-detalhes">
+                            <strong>${esc(item.nome)}</strong>
+                            <span class="meta"><em>Marca: ${esc(item.marca)}</em></span>
+                            <span class="meta">${item.quantidade}x ${moeda(item.preco)} = ${moeda(item.quantidade * item.preco)}</span>
+                        </div>
+                        <button type="button" class="btn-excluir" data-remover="${index}">Remover<span class="sr-only"> ${esc(item.nome)} (${esc(item.marca)})</span></button>
+                    </li>`;
+            });
+            $('totalUnidades').textContent = totalUnidades;
+            $('valorTotal').textContent = moeda(valorTotal);
+        }
+
+        function removerDoCarrinho(indice) {
+            const [removido] = carrinho.splice(indice, 1);
+            atualizarCarrinho();
+            anunciar(`${removido.nome} removido do pedido.`);
+            $('btnFinalizar').focus();
+        }
+
+        async function finalizarPedido() {
+            if (carrinho.length === 0) return anunciar('Carrinho vazio!', true);
+
+            const botao = $('btnFinalizar');
+            botao.disabled = true;
+            try {
+                await api('POST', '/api/pedidos', {
+                    itens: carrinho.map(i => ({ id: i.id, quantidade: i.quantidade }))
+                });
+                carrinho = [];
+                atualizarCarrinho();
+                await carregarMateriais();
+                mudarTela('vitrine', true);
+                anunciar('Pedido enviado à chefia! O estoque foi atualizado.');
+            } catch (e) {
+                await carregarMateriais();
+                anunciar(e.message, true);
+            } finally {
+                botao.disabled = false;
+            }
+        }
+
+        function validarCampos(campos, erroId) {
+            const msgs = [];
+            let primeiro = null;
+            campos.forEach(({ el, msg }) => {
+                const invalido = !el.value.trim() || !el.checkValidity();
+                if (invalido) {
+                    el.setAttribute('aria-invalid', 'true');
+                    el.setAttribute('aria-describedby', erroId);
+                    msgs.push(msg);
+                    if (!primeiro) primeiro = el;
+                } else {
+                    el.removeAttribute('aria-invalid');
+                    el.removeAttribute('aria-describedby');
+                }
+            });
+            $(erroId).textContent = msgs.length ? msgs.join(' ') : '';
+            if (primeiro) primeiro.focus();
+            return msgs.length === 0;
+        }
+
+        function renderizarListaMateriais() {
+            const lista = $('listaMateriais');
+            if (produtosDisponiveis.length === 0) {
+                lista.innerHTML = '<li class="vazio">Nenhum material cadastrado.</li>';
+                return;
+            }
+            lista.innerHTML = produtosDisponiveis.map(p => `
+                <li class="item-lista">
+                    <div class="item-detalhes">
+                        <strong class="nome"><span aria-hidden="true">${esc(p.icone || '📦')}</span> ${esc(p.nome)}</strong>
+                        <span class="meta"><strong>Quantidade:</strong> ${p.quantidade} un &nbsp; <strong>Preço:</strong> ${moeda(p.preco)}</span>
+                        <span class="meta"><strong>Marcas:</strong> ${p.marcas.length ? esc(p.marcas.join(', ')) : 'não informadas'}</span>
+                    </div>
+                    <div class="acoes">
+                        <button type="button" class="btn-editar" data-editar-material="${p.id}">Editar<span class="sr-only"> ${esc(p.nome)}</span></button>
+                        <button type="button" class="btn-excluir" data-excluir-material="${p.id}">Excluir<span class="sr-only"> ${esc(p.nome)}</span></button>
+                    </div>
+                </li>`).join('');
+        }
+
+        function limparFormMaterial() {
+            $('formMaterial').reset();
+            $('idMaterialEdicao').value = '';
+            $('subtituloMaterial').textContent = 'Cadastrar Novo Material';
+            $('btnSalvarMaterial').textContent = 'Salvar Material';
+            $('btnCancelarMaterial').hidden = true;
+            $('erroMaterial').textContent = '';
+            ['cadNomeMat', 'cadQtdMat', 'cadPrecoMat'].forEach(id => { $(id).removeAttribute('aria-invalid'); $(id).removeAttribute('aria-describedby'); });
+        }
+
+        function editarMaterial(id) {
+            const p = produtosDisponiveis.find(x => x.id === id);
+            if (!p) return;
+            $('idMaterialEdicao').value = p.id;
+            $('cadNomeMat').value = p.nome;
+            $('cadIconeMat').value = p.icone || '';
+            $('cadQtdMat').value = p.quantidade;
+            $('cadPrecoMat').value = p.preco;
+            $('cadMarcasMat').value = (p.marcas || []).join(', ');
+            $('subtituloMaterial').textContent = `Editar Material: ${p.nome}`;
+            $('btnSalvarMaterial').textContent = 'Salvar Alterações';
+            $('btnCancelarMaterial').hidden = false;
+            $('cadNomeMat').focus();
+        }
+
+        async function salvarMaterial(evento) {
+            evento.preventDefault();
+            const ok = validarCampos([
+                { el: $('cadNomeMat'), msg: 'Informe o nome do material.' },
+                { el: $('cadQtdMat'), msg: 'Informe uma quantidade inteira maior ou igual a 0.' },
+                { el: $('cadPrecoMat'), msg: 'Informe um preço maior ou igual a 0.' }
+            ], 'erroMaterial');
+            if (!ok) return;
+
+            const corpo = {
+                nome: $('cadNomeMat').value.trim(),
+                icone: $('cadIconeMat').value.trim() || null,
+                quantidade: parseInt($('cadQtdMat').value, 10),
+                preco: parseFloat($('cadPrecoMat').value),
+                marcas: $('cadMarcasMat').value.split(',').map(m => m.trim()).filter(Boolean)
+            };
+            if (!Number.isInteger(corpo.quantidade)) return validarCampos([{ el: $('cadQtdMat'), msg: 'A quantidade deve ser um número inteiro.' }], 'erroMaterial');
+
+            const id = $('idMaterialEdicao').value;
+            try {
+                if (id) await api('PUT', `/api/materiais/${id}`, corpo);
+                else await api('POST', '/api/materiais', corpo);
+                limparFormMaterial();
+                await carregarMateriais();
+                anunciar(id ? `Material '${corpo.nome}' atualizado com sucesso!` : `Material '${corpo.nome}' cadastrado com sucesso!`);
+                $('cadNomeMat').focus();
+            } catch (e) {
+                $('erroMaterial').textContent = e.message;
+            }
+        }
+
+        async function excluirMaterial(id) {
+            const p = produtosDisponiveis.find(x => x.id === id);
+            if (!p || !confirm(`Tem certeza que deseja excluir o material ${p.nome}?`)) return;
+            try {
+                await api('DELETE', `/api/materiais/${id}`);
+                carrinho = carrinho.filter(i => i.id !== id);
+                await carregarMateriais();
+                anunciar(`Material '${p.nome}' excluído.`);
+                $('cadNomeMat').focus();
+            } catch (e) {
+                anunciar(e.message, true);
+            }
+        }
+
+        async function carregarFuncionarios() {
+            try {
+                funcionarios = await api('GET', '/api/funcionarios');
+            } catch (e) {
+                funcionarios = [];
+                anunciar(e.message, true);
+            }
+            renderizarFuncionarios();
+        }
+
+        function renderizarFuncionarios() {
+            const lista = $('listaFuncionarios');
+            if (funcionarios.length === 0) {
+                lista.innerHTML = '<li class="vazio">Nenhum funcionário cadastrado.</li>';
+                return;
+            }
+            lista.innerHTML = funcionarios.map(f => `
+                <li class="item-lista">
+                    <div class="item-detalhes">
+                        <strong class="nome"><span aria-hidden="true">👤</span> ${esc(f.nome)}</strong>
+                        <span class="meta"><strong>Cargo:</strong> ${esc(f.cargo)}</span>
+                        <span class="meta"><strong>Departamento:</strong> ${esc(f.departamento)}</span>
+                    </div>
+                    <div class="acoes">
+                        <button type="button" class="btn-editar" data-editar-func="${f.id}">Editar<span class="sr-only"> ${esc(f.nome)}</span></button>
+                        <button type="button" class="btn-excluir" data-excluir-func="${f.id}">Excluir<span class="sr-only"> ${esc(f.nome)}</span></button>
+                    </div>
+                </li>`).join('');
+        }
+
+        function limparFormFuncionario() {
+            $('formFuncionario').reset();
+            $('idFuncEdicao').value = '';
+            $('subtituloFunc').textContent = 'Cadastrar Novo Funcionário';
+            $('btnSalvarFunc').textContent = 'Cadastrar Funcionário';
+            $('btnCancelarFunc').hidden = true;
+            $('erroFunc').textContent = '';
+            ['cadNomeFunc', 'cadCargoFunc', 'cadDeptoFunc'].forEach(id => { $(id).removeAttribute('aria-invalid'); $(id).removeAttribute('aria-describedby'); });
+        }
+
+        function editarFuncionario(id) {
+            const f = funcionarios.find(x => x.id === id);
+            if (!f) return;
+            $('idFuncEdicao').value = f.id;
+            $('cadNomeFunc').value = f.nome;
+            $('cadCargoFunc').value = f.cargo;
+            $('cadDeptoFunc').value = f.departamento;
+            $('subtituloFunc').textContent = `Editar Funcionário: ${f.nome}`;
+            $('btnSalvarFunc').textContent = 'Salvar Alterações';
+            $('btnCancelarFunc').hidden = false;
+            $('cadNomeFunc').focus();
+        }
+
+        async function salvarFuncionario(evento) {
+            evento.preventDefault();
+            const ok = validarCampos([
+                { el: $('cadNomeFunc'), msg: 'Informe o nome completo.' },
+                { el: $('cadCargoFunc'), msg: 'Informe o cargo.' },
+                { el: $('cadDeptoFunc'), msg: 'Informe o departamento.' }
+            ], 'erroFunc');
+            if (!ok) return;
+
+            const corpo = {
+                nome: $('cadNomeFunc').value.trim(),
+                cargo: $('cadCargoFunc').value.trim(),
+                departamento: $('cadDeptoFunc').value.trim()
+            };
+            const id = $('idFuncEdicao').value;
+            try {
+                if (id) await api('PUT', `/api/funcionarios/${id}`, corpo);
+                else await api('POST', '/api/funcionarios', corpo);
+                limparFormFuncionario();
+                await carregarFuncionarios();
+                anunciar(id ? `Funcionário(a) ${corpo.nome} atualizado(a) com sucesso!` : `Funcionário(a) ${corpo.nome} cadastrado(a) com sucesso!`);
+                $('cadNomeFunc').focus();
+            } catch (e) {
+                $('erroFunc').textContent = e.message;
+            }
+        }
+
+        async function excluirFuncionario(id) {
+            const f = funcionarios.find(x => x.id === id);
+            if (!f || !confirm(`Tem certeza que deseja excluir o funcionário ${f.nome}?`)) return;
+            try {
+                await api('DELETE', `/api/funcionarios/${id}`);
+                await carregarFuncionarios();
+                anunciar(`Funcionário(a) ${f.nome} excluído(a).`);
+                $('cadNomeFunc').focus();
+            } catch (e) {
+                anunciar(e.message, true);
+            }
+        }
+
+        document.querySelectorAll('.nav-btn[data-tela]').forEach(b =>
+            b.addEventListener('click', () => { $('status').textContent = ''; mudarTela(b.dataset.tela, true); }));
+        $('btnSair').addEventListener('click', () => anunciar('O login de usuários ainda não foi implementado nesta versão.', true));
+        $('buscaMaterial').addEventListener('input', renderizarVitrine);
+        $('btnFinalizar').addEventListener('click', finalizarPedido);
+        $('formMaterial').addEventListener('submit', salvarMaterial);
+        $('formFuncionario').addEventListener('submit', salvarFuncionario);
+        $('btnCancelarMaterial').addEventListener('click', () => { limparFormMaterial(); $('cadNomeMat').focus(); });
+        $('btnCancelarFunc').addEventListener('click', () => { limparFormFuncionario(); $('cadNomeFunc').focus(); });
+
+        document.addEventListener('click', (e) => {
+            const alvo = e.target.closest('button');
+            if (!alvo) return;
+            const d = alvo.dataset;
+            if (d.adicionar) adicionarAoPedido(Number(d.adicionar));
+            else if (d.qtdMenos) ajustarQuantidade(Number(d.qtdMenos), -1);
+            else if (d.qtdMais) ajustarQuantidade(Number(d.qtdMais), 1);
+            else if (d.remover) removerDoCarrinho(Number(d.remover));
+            else if (d.editarMaterial) editarMaterial(Number(d.editarMaterial));
+            else if (d.excluirMaterial) excluirMaterial(Number(d.excluirMaterial));
+            else if (d.editarFunc) editarFuncionario(Number(d.editarFunc));
+            else if (d.excluirFunc) excluirFuncionario(Number(d.excluirFunc));
+        });
+        document.addEventListener('input', (e) => {
+            if (e.target.matches('input[data-qtd]')) {
+                const id = Number(e.target.dataset.qtd);
+                const produto = produtosDisponiveis.find(p => p.id === id);
+                const valor = parseInt(e.target.value, 10);
+                if (produto && Number.isInteger(valor) && valor > restantePedido(produto)) e.target.value = restantePedido(produto);
+                atualizarCardQuantidade(id, false);
+            }
+        });
+        document.addEventListener('change', (e) => {
+            if (e.target.matches('select[data-id]')) verificarSugestaoMarca(e.target.dataset.id);
+        });
+
+        window.addEventListener('load', () => {
+            mudarTela('vitrine');
+            carregarFuncionarios();
+        });
+    </script>
+</body>
+</html>
