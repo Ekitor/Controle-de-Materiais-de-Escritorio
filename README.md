@@ -10,8 +10,10 @@ O sistema tem como objetivo principal solucionar problemas recorrentes de quedas
 
 ## Componentes da Equipe
 * **Arthur Feliciano** - Desenvolvedor
-* **Eitor Torres** - Desenvolvedor & Scrum Master
-* **José Guilherme** - Desenvolvedor
+* **Eitor Torres** - Desenvolvedor
+* **José Guilherme** - Desenvolvedor & Scrum Master
 
-# Status da Sprint 01
-Atualmente, a equipe está focada na execução da Sprint 01, desenvolvendo as operações fundamentais de CRUD (Create, Read, Update, Delete) para as principais entidades do sistema, com controle de versão, revisão de código (Pull Requests) e gestão do Backlog através do Kanban.
+## Tecnologias utilizadas
+* HTML, CSS e JavaScript (front-end, comunicação com a API via `fetch()`)
+* Node.js e Express (API REST)
+* SQLite (banco em arquivo) com o módulo nativo
